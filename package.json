@@ -1,0 +1,23 @@
+{
+  "name": "turnin-worker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "check.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bradenn/turnin-worker.git"
+  },
+  "author": "Braden Nicholson Media",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bradenn/turnin-worker/issues"
+  },
+  "homepage": "https://github.com/bradenn/turnin-worker#readme",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "diff": "^4.0.2"
+  }
+}
