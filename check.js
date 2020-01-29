@@ -62,7 +62,7 @@ const testFile = (test) => {
 const compileFile = (command) => {
     return new Promise(async (resolve, reject) => {
         childProcess.exec(command, {
-            timeout: 1000,
+            timeout: 1500,
             killSignal: "SIGTERM",
             cwd: process.cwd() + "/cache"
         }, (err, stdout, stderr) => {
