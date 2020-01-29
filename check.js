@@ -1,6 +1,7 @@
 const fs = require('fs');
-var jsdiff = require('diff');
-var childProcess = require('child_process');
+const path = require('path');
+let childProcess = require('child_process');
+
 
 let convertToFile = (name, location, code) => {
     let file = fs.createWriteStream(location + name);
@@ -10,46 +11,71 @@ let convertToFile = (name, location, code) => {
     file.close();
 };
 
-function readFile(test) {
-    let inputFile = "cache/" + test.name + ".myout";
+function readFile(test, ext) {
+    let inputFile = "cache/" + test.name + ext;
     let output = {lines: []};
     try {
         const input = fs.readFileSync(inputFile, 'UTF-8');
-        const inputLines = input.split(/\r?\n/);
-        for (let i = 0; i < test.output.length; i++) {
-            output.lines.push(inputLines[i]);
-        }
+        output.lines = input.split(/\r?\n/);
     } catch (err) {
         console.error(err);
     }
-    return {name: test.name, _id: test._id, output};
+    return output;
 }
 
-let compileAndCheck = (command, tests, cb) => {
-    let compile = childProcess.exec(command);
-
-    compile.on('exit', function () {
-
-        let testCommand = "";
-        tests.forEach(test => {
-            testCommand += './a.out < cache/' + test.name + '.in > cache/' + test.name + '.myout &&';
-        });
-
-        let d = childProcess.exec(testCommand + " ls");
-        d.on('exit', (code) => {
-            console.log(code);
-            let res = {
-                results: []
-            };
-            tests.forEach(test => {
-                res.results.push(readFile(test));
+const cleanUp = () => {
+    fs.readdir("cache/", (err, files) => {
+        if (err) throw err;
+        for (const file of files) {
+            fs.unlink(path.join("cache/", file), err => {
+                if (err) throw err;
             });
-
-            cb(res);
-        });
-
-
+        }
     });
+
+    // Kill the infinite loops that did not obey SIGTERM
+    // TODO: improve timeout functions
+    childProcess.exec("pkill -9 a.out");
+};
+
+const testFile = (test) => {
+    return new Promise(async (resolve, reject) => {
+        childProcess.exec(`./a.out < ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`, {
+            timeout: 1000,
+            cwd: process.cwd() + "/cache"
+        }, (error, stdout, stderr) => {
+            if (error) {
+                resolve({
+                    output: {name: test.name, _id: test._id, output: {lines: [""]}},
+                    code: error.code,
+                    signal: error.signal,
+                    stderr: stderr,
+                    stdout: stdout
+                });
+            } else {
+                resolve({name: test.name, _id: test._id, stdout: readFile(test, ".myout"), stderr: readFile(test, ".myerr"), code: 0, signal: null });
+            }
+        });
+    });
+};
+
+const compileFile = (command) => {
+    return new Promise(async (resolve, reject) => {
+        childProcess.exec(command, {
+            timeout: 1000,
+            killSignal: "SIGTERM",
+            cwd: process.cwd() + "/cache"
+        }, (err, stdout, stderr) => {
+            resolve({error: err, stdout: stdout, stderr: stderr, code: (err) ? err.code : 0});
+        });
+    });
+};
+
+const compileAndCheck = async (command, tests, cb) => {
+    const compileResults = await Promise.resolve(compileFile(command));
+    const testResults = await Promise.all(tests.map(test => testFile(test)));
+    cleanUp();
+    cb(testResults, compileResults);
 };
 
 module.exports.compileAndCheck = compileAndCheck;

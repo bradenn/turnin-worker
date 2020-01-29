@@ -3,11 +3,11 @@ let router = express.Router();
 let getDiff = require('../check.js');
 
 
-router.post('/test', (req, res) => {
+router.post('/test', (req, res, next) => {
 
     let files = req.body.files.files;
     files.forEach((file) => {
-     getDiff.convertToFile(file.name, "", file.contents);
+     getDiff.convertToFile(file.name, "cache/", file.contents);
     });
 
      let tests = req.body.tests.tests;
@@ -15,10 +15,9 @@ router.post('/test', (req, res) => {
         getDiff.convertToFile(test.name+".in", "cache/", test.input);
      });
 
-    let resp = [];
-   getDiff.compileAndCheck(req.body.make, tests, (output) => {
-        res.status(200).json({message: "Okay", output});
-   });
+  getDiff.compileAndCheck(req.body.make, tests, (testResponses, compileOutputs) => {
+      return res.status(200).json({tests: testResponses, compile: compileOutputs});
+  }).then(r => {});
 
 
 });
