@@ -16,7 +16,10 @@ function readFile(test, ext) {
     let output = {lines: []};
     try {
         const input = fs.readFileSync(inputFile, 'UTF-8');
-        output.lines = input.split(/\r?\n/);
+        let lines = input.split(/\r?\n/);
+        lines.forEach((ln) => {
+            output.lines.push(ln);
+        });
     } catch (err) {
         console.error(err);
     }
