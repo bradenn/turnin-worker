@@ -5,12 +5,12 @@ let getDiff = require('../check.js');
 
 router.post('/test', (req, res, next) => {
 
-    let files = req.body.files.files;
+    let files = req.body.files;
     files.forEach(file => {
         getDiff.convertToFile(file.name, "./cache/", file.contents);
     });
 
-    let tests = req.body.tests.tests;
+    let tests = req.body.tests;
     console.log(`Creating necessary files for tests`);
     tests.forEach((test) => {
         console.log(`Creating necessary files for test ${test._id}`);
