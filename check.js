@@ -53,7 +53,7 @@ const cleanUp = () => {
 const testFile = (test) => {
     return new Promise(async (resolve, reject) => {
         childProcess.exec(`./a.out < ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`, {
-            timeout: 5000,
+            timeout: 1000,
             cwd: process.cwd() + "/cache"
         }, (error, stdout, stderr) => {
             if (error) {
@@ -82,7 +82,7 @@ const testFile = (test) => {
 const compileFile = (command) => {
     return new Promise(async (resolve, reject) => {
         childProcess.exec(command, {
-            timeout: 6000,
+            timeout: 1000,
             killSignal: "SIGTERM",
             cwd: process.cwd() + "/cache"
         }, (err, stdout, stderr) => {
