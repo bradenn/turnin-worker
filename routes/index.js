@@ -6,11 +6,11 @@ let getDiff = require('../check.js');
 router.post('/test', (req, res, next) => {
 
     let files = req.body.files.files;
-    files.forEach((file) => {
-     getDiff.convertToFile(file.name, "cache/", file.contents);
-    });
+    for (const file of files) {
+     const e = Promise.resolve(getDiff.convertToFile(file.name, "cache/", file.contents));
+    }
 
-     let tests = req.body.tests.tests;
+    let tests = req.body.tests.tests;
         tests.forEach((test) => {
         getDiff.convertToFile(test.name+".in", "cache/", test.input);
      });

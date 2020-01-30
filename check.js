@@ -4,11 +4,13 @@ let childProcess = require('child_process');
 
 
 let convertToFile = (name, location, code) => {
-    let file = fs.createWriteStream(location + name);
-    code.forEach(line => {
-        file.write(line + "\n");
+    return new Promise(async (resolve, reject) => {
+        let file = fs.createWriteStream(location + name);
+        code.forEach(line => {
+            file.write(line + "\n");
+        });
+        file.close();
     });
-    file.close();
 };
 
 function readFile(test, ext) {
@@ -27,14 +29,14 @@ function readFile(test, ext) {
 }
 
 const cleanUp = () => {
-    fs.readdir("cache/", (err, files) => {
-        if (err) throw err;
-        for (const file of files) {
-            fs.unlink(path.join("cache/", file), err => {
-                if (err) throw err;
-            });
-        }
-    });
+    // fs.readdir("cache/", (err, files) => {
+    //     if (err) throw err;
+    //     for (const file of files) {
+    //         fs.unlink(path.join("cache/", file), err => {
+    //             if (err) throw err;
+    //         });
+    //     }
+    // });
 
     // Kill the infinite loops that did not obey SIGTERM
     // TODO: improve timeout functions
