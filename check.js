@@ -14,7 +14,7 @@ let convertToFile = (name, location, code) => {
 };
 
 function readFile(test, ext) {
-    let inputFile = "cache/" + test.name + ext;
+    let inputFile = "./cache/" + test.name + ext;
     let output = {lines: []};
     try {
         const input = fs.readFileSync(inputFile, 'UTF-8');
@@ -29,14 +29,14 @@ function readFile(test, ext) {
 }
 
 const cleanUp = () => {
-    // fs.readdir("cache/", (err, files) => {
-    //     if (err) throw err;
-    //     for (const file of files) {
-    //         fs.unlink(path.join("cache/", file), err => {
-    //             if (err) throw err;
-    //         });
-    //     }
-    // });
+    fs.readdir("./cache/", (err, files) => {
+        if (err) throw err;
+        for (const file of files) {
+            fs.unlink(path.join("./cache/", file), err => {
+                if (err) throw err;
+            });
+        }
+    });
 
     // Kill the infinite loops that did not obey SIGTERM
     // TODO: improve timeout functions
