@@ -46,14 +46,22 @@ const testFile = (test) => {
         }, (error, stdout, stderr) => {
             if (error) {
                 resolve({
-                    output: {name: test.name, _id: test._id, output: {lines: [""]}},
+                    name: test.name,
+                    _id: test._id,
                     code: error.code,
                     signal: error.signal,
-                    stderr: stderr,
-                    stdout: stdout
+                    stdout: readFile(test, ".myout"),
+                    stderr: readFile(test, ".myerr")
                 });
             } else {
-                resolve({name: test.name, _id: test._id, stdout: readFile(test, ".myout"), stderr: readFile(test, ".myerr"), code: 0, signal: null });
+                resolve({
+                    name: test.name,
+                    _id: test._id,
+                    stdout: readFile(test, ".myout"),
+                    stderr: readFile(test, ".myerr"),
+                    code: 0,
+                    signal: null
+                });
             }
         });
     });
