@@ -5,6 +5,7 @@ let childProcess = require('child_process');
 
 let convertToFile = (name, location, code) => {
     return new Promise(async (resolve, reject) => {
+        console.log(`Creating file: ${location + name} => ${code.length} lines `);
         let file = fs.createWriteStream(location + name);
         code.forEach(line => {
             file.write(line + "\n");
@@ -29,18 +30,24 @@ function readFile(test, ext) {
 }
 
 const cleanUp = () => {
-    // fs.readdir("./cache/", (err, files) => {
-    //     if (err) throw err;
-    //     for (const file of files) {
-    //         fs.unlink(path.join("./cache/", file), err => {
-    //             if (err) throw err;
-    //         });
-    //     }
-    // });
+    console.log("Performing clean-up...");
+
+    fs.readdir("./cache/", (err, files) => {
+        if (err) throw err;
+        console.log(`Deleting ${files.length} file(s) from ./cache`);
+        for (const file of files) {
+            fs.unlink(path.join("./cache/", file), err => {
+                if (err) throw err;
+                console.log(`Deleting file: ./cache/${file}`);
+            });
+        }
+    });
 
     // Kill the infinite loops that did not obey SIGTERM
     // TODO: improve timeout functions
-    childProcess.exec("pkill -9 a.out");
+    childProcess.exec("pkill -9 a.out", (err, out, stderr) => {
+        console.log(`Killed stay instance(s) not conforming to SIGTERM`)
+    });
 };
 
 const testFile = (test) => {

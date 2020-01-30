@@ -1,0 +1,27 @@
+Express server started. Listing on port 5555.
+Creating file: ./cache/p1.cpp => 49 lines 
+Creating necessary files for tests
+Creating necessary files for test 5e2bde9555c402635b7ff5f6
+Creating file: ./cache/t01.in => 2 lines 
+Creating necessary files for test 5e2bdead55c402635b7ff5f8
+Creating file: ./cache/t02.in => 11 lines 
+Creating necessary files for test 5e2bdebc55c402635b7ff5fa
+Creating file: ./cache/t03.in => 2 lines 
+Creating necessary files for test 5e2bdec955c402635b7ff5fc
+Creating file: ./cache/t04.in => 2 lines 
+Performing clean-up...
+Deleting 14 file(s) from ./cache
+Deleting file: ./cache/a.out
+Deleting file: ./cache/p1.cpp
+Deleting file: ./cache/t01.in
+Deleting file: ./cache/t01.myerr
+Deleting file: ./cache/t01.myout
+Deleting file: ./cache/t02.in
+Deleting file: ./cache/t02.myerr
+Deleting file: ./cache/t03.in
+Deleting file: ./cache/t02.myout
+Deleting file: ./cache/t03.myerr
+Deleting file: ./cache/t03.myout
+Deleting file: ./cache/t04.in
+Deleting file: ./cache/t04.myerr
+Deleting file: ./cache/t04.myout
