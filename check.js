@@ -6,7 +6,7 @@ let childProcess = require('child_process');
 let convertToFile = (name, location, code) => {
     return new Promise(async (resolve, reject) => {
         console.log(`Creating file: ${location + name} => ${code.length} lines `);
-        let file = fs.createWriteStream(location + name);
+        let file = fs.createWriteStream(location + name, {flags: 'a'});
         code.forEach(line => {
             file.write(line + "\n");
         });
