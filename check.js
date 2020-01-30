@@ -10,7 +10,7 @@ let convertToFile = (name, location, code) => {
         code.forEach(line => {
             file.write(line + "\n");
         });
-        file.close();
+        file.end();
     });
 };
 
