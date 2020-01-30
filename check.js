@@ -32,16 +32,16 @@ function readFile(test, ext) {
 const cleanUp = () => {
     console.log("Performing clean-up...");
 
-    // fs.readdir("./cache/", (err, files) => {
-    //     if (err) throw err;
-    //     console.log(`Deleting ${files.length} file(s) from ./cache`);
-    //     for (const file of files) {
-    //         fs.unlink(path.join("./cache/", file), err => {
-    //             if (err) throw err;
-    //             console.log(`Deleting file: ./cache/${file}`);
-    //         });
-    //     }
-    // });
+    fs.readdir("./cache/", (err, files) => {
+        if (err) throw err;
+        console.log(`Deleting ${files.length} file(s) from ./cache`);
+        for (const file of files) {
+            fs.unlink(path.join("./cache/", file), err => {
+                if (err) throw err;
+                console.log(`Deleting file: ./cache/${file}`);
+            });
+        }
+    });
 
     // Kill the infinite loops that did not obey SIGTERM
     // TODO: improve timeout functions
