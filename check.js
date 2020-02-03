@@ -31,29 +31,32 @@ function readFile(test, ext) {
 
 const cleanUp = () => {
     console.log("Performing clean-up...");
-
-    fs.readdir("./cache/", (err, files) => {
-        if (err) throw err;
-        console.log(`Deleting ${files.length} file(s) from ./cache`);
-        for (const file of files) {
-            fs.unlink(path.join("./cache/", file), err => {
-                if (err) throw err;
-                console.log(`Deleting file: ./cache/${file}`);
-            });
-        }
+    return new Promise(async (resolve, reject) => {
+        fs.readdir("./cache/", (err, files) => {
+            if (err) throw err;
+            console.log(`Deleting ${files.length} file(s) from ./cache`);
+            for (const file of files) {
+                fs.unlink(path.join("./cache/", file), err => {
+                    if (err) throw err;
+                    resolve(err);
+                    console.log(`Deleting file: ./cache/${file}`);
+                });
+            }
+        });
+        // Kill the infinite loops that did not obey SIGTERM
+        // TODO: improve timeout functions
+        childProcess.exec("pkill -9 a.out", (err, out, stderr) => {
+            console.log(`Killed stay instance(s) not conforming to SIGTERM`)
+        });
     });
 
-    // Kill the infinite loops that did not obey SIGTERM
-    // TODO: improve timeout functions
-    childProcess.exec("pkill -9 a.out", (err, out, stderr) => {
-        console.log(`Killed stay instance(s) not conforming to SIGTERM`)
-    });
+
 };
 
 const testFile = (test) => {
     return new Promise(async (resolve, reject) => {
         childProcess.exec(`./a.out < ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`, {
-            timeout: 1000,
+            timeout: 2000,
             cwd: process.cwd() + "/cache"
         }, (error, stdout, stderr) => {
             if (error) {
@@ -62,8 +65,8 @@ const testFile = (test) => {
                     _id: test._id,
                     code: error.code,
                     signal: error.signal,
-                    stdout: readFile(test, ".myout"),
-                    stderr: readFile(test, ".myerr")
+                    stdout: stdout,
+                    stderr: stderr
                 });
             } else {
                 resolve({
@@ -82,7 +85,7 @@ const testFile = (test) => {
 const compileFile = (command) => {
     return new Promise(async (resolve, reject) => {
         childProcess.exec(command, {
-            timeout: 1000,
+            timeout: 1500,
             killSignal: "SIGTERM",
             cwd: process.cwd() + "/cache"
         }, (err, stdout, stderr) => {
@@ -94,7 +97,8 @@ const compileFile = (command) => {
 const compileAndCheck = async (command, tests, cb) => {
     const compileResults = await Promise.resolve(compileFile(command));
     const testResults = await Promise.all(tests.map(test => testFile(test)));
-    cleanUp();
+    const clean = await Promise.resolve(cleanUp());
+
     cb(testResults, compileResults);
 };
 
