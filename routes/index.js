@@ -1,6 +1,7 @@
 let express = require('express');
 let router = express.Router();
 let getDiff = require('../check.js');
+let config = require('../env/config.json');
 
 
 router.post('/test', (req, res, next) => {
@@ -18,7 +19,8 @@ router.post('/test', (req, res, next) => {
     });
 
     getDiff.compileAndCheck(req.body.make, tests, (testResponses, compileOutputs) => {
-        return res.status(200).json({tests: testResponses, compile: compileOutputs});
+        return res.status(200).json({tests: testResponses, compile: compileOutputs,
+            debug: {server: config.server, node: config.node, instance: config.instance}});
     }).then(r => {
     });
 
