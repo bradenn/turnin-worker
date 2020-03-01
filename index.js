@@ -4,8 +4,8 @@ let app = express();
 let bodyParser = require('body-parser');
 
 // Parse incoming requests
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 // Include routes
 var routes = require('./routes/');
@@ -17,6 +17,8 @@ app.use(function (req, res, next) {
     err.status = 404;
     next(err);
 });
+
+
 
 app.use(function (err, req, res, next) {
     res.status(err.status || 500);
