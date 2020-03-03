@@ -27,5 +27,10 @@ app.use(function (err, req, res, next) {
 
 // Listen on port {port} <- config
 app.listen(config.port, function () {
-    console.log('Express server started. Listing on port ' + config.port + '.');
+    let port = config.port;
+    if(process.env.NODE_ENV === "prod"){
+        port = process.env.PORT;
+        console.log(`Using env port from pm2.`)
+    }
+    console.log('Express server started. Listing on port ' + port + '.');
 });
