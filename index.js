@@ -28,9 +28,9 @@ app.use(function (err, req, res, next) {
 // Listen on port {port} <- config
 app.listen(config.port, function () {
     let port = config.port;
-    if(process.env.NODE_ENV === "prod"){
+    if(process.env.NODE_ENV === "cluster"){
         port = process.env.PORT;
-        console.log(`Using env port from pm2.`)
+        console.log(`Launching in cluster mode.`)
     }
     console.log('Express server started. Listing on port ' + port + '.');
 });
