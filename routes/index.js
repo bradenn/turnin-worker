@@ -27,7 +27,7 @@ router.post('/test', (req, res, next) => {
     getDiff.compileAndCheck(req.body.make, tests, jobKey, (testResponses, compileOutputs) => {
         return res.status(200).json({
             tests: testResponses, compile: compileOutputs,
-            debug: {server: config.server, node: config.node, instance: (process.env.NODE_ENV === "cluster")?(process.env.INSTANCE_ID).toString():config.instance}
+            debug: {server: config.server, node: config.node, instance: (process.env.NODE_ENV === "cluster")?(process.env.INSTANCE_ID + 1).toString():config.instance}
         });
     }).then(r => {
     });
