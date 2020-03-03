@@ -27,7 +27,7 @@ router.post('/test', (req, res, next) => {
     getDiff.compileAndCheck(req.body.make, tests, jobKey, (testResponses, compileOutputs) => {
         return res.status(200).json({
             tests: testResponses, compile: compileOutputs,
-            debug: {server: config.server, node: config.node, instance: (proccess.env.NODE_ENV === "prod")?(proccess.env.PORT - 5554):config.instance}
+            debug: {server: config.server, node: config.node, instance: (process.env.NODE_ENV === "prod")?(process.env.PORT - 5554):config.instance}
         });
     }).then(r => {
     });
