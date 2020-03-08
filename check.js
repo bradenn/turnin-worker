@@ -58,11 +58,18 @@ const cleanUp = (key, exec) => {
             if (err) throw err;
             console.log(`Deleting ${files.length} file(s) from ./cache`);
             for (const file of files) {
-                fs.unlink(path.join(`./cache/${key}/`, file), err => {
-                    if (err) throw err;
-                    resolve(err);
-                    console.log(`Deleting file: ./cache/${file}`);
-                });
+                let stats = fs.lstatSync(path.join(`./cache/${key}/`, file));
+                if (!stats.isDirectory()) {
+                    fs.unlink(path.join(`./cache/${key}/`, file), err => {
+                        if (err) console.log(`Cannot delete file: ./cache/${file}`);
+                        resolve("");
+                        console.log(`Deleting file: ./cache/${file}`);
+                    });
+                } else {
+                    deleteFolderRecursive(path.join(`./cache/${key}/`, file));
+                    console.log(`Deleting folder: ./cache/${file}`);
+                }
+
             }
 
         });
@@ -75,10 +82,30 @@ const cleanUp = (key, exec) => {
     });
 };
 
+let deleteFolderRecursive = (path) => {
+    if (fs.existsSync(path)) {
+        fs.readdirSync(path).forEach(function (file, index) {
+            let curPath = path + "/" + file;
+            if (fs.lstatSync(curPath).isDirectory()) {
+                deleteFolderRecursive(curPath);
+            } else {
+                fs.unlinkSync(curPath);
+            }
+        });
+        fs.rmdirSync(path);
+    }
+};
+
+const removeTemp = (key) => {
+    console.log("Removing folder...");
+    fs.rmdirSync("./cache/" + key);
+};
+
 const testFile = (exec, test, key) => {
     return new Promise(async (resolve) => {
-        console.log(`./${exec} < ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`);
-        childProcess.exec(`./${exec} < ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`, {
+        let arguments = `${test.arguments} `;
+        console.log(`./${exec} ${arguments}< ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`);
+        childProcess.exec(`./${exec} ${arguments}< ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`, {
             timeout: 2000,
             cwd: process.cwd() + `/cache/${key}/`
         }, (error, stdout, stderr) => {
@@ -129,8 +156,8 @@ const compileAndCheck = async (command, tests, key, cb) => {
     let postCompile = await getFilesPromise(key);
     let exec = postCompile.filter(f => !preCompile.includes(f)).filter(f => (!f.includes(".o") || f.includes(".out")))[0];
     const testResults = await Promise.all(tests.map(test => testFile(exec, test, key)));
-    const clean = await Promise.resolve(cleanUp(key, exec));
-    fs.rmdirSync("./cache/" + key);
+    await Promise.resolve(cleanUp(key, exec));
+    deleteFolderRecursive(`./cache/${key}`);
     cb(testResults, compileResults);
 };
 
