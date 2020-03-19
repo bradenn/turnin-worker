@@ -1,5 +1,4 @@
 .DS_Store
-env/config.json
 cache/*
 .idea
 node_modules/*
