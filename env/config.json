@@ -1,0 +1,6 @@
+{
+  "port": 5555,
+  "server": "localhost",
+  "node": "01",
+  "instance": "01"
+}
