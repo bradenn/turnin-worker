@@ -18,9 +18,7 @@ router.post('/test', (req, res, next) => {
     });
 
     let tests = req.body.tests;
-    console.log(`Creating necessary files for tests`);
     tests.forEach((test) => {
-        console.log(`Creating necessary files for test ${test._id}`);
         getDiff.convertToFile(test.name + ".in", `./cache/${jobKey}/tests/`, test.input);
     });
 

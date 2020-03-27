@@ -19,7 +19,6 @@ let configDir = (key) => {
 
 let convertToFile = (name, location, code) => {
     return new Promise(async (resolve, reject) => {
-        console.log(`Creating file: ${location + name} => ${code.length} lines `);
         let file = fs.createWriteStream(location + name);
         code.forEach(line => {
             if (line !== "") {
@@ -60,22 +59,18 @@ const getFilesPromise = (key) => {
 };
 
 const cleanUp = (key, exec) => {
-    console.log("Performing clean-up...");
     return new Promise(async (resolve, reject) => {
         getFiles(key, (err, files) => {
             if (err) throw err;
-            console.log(`Deleting ${files.length} file(s) from ./cache`);
             for (const file of files) {
                 let stats = fs.lstatSync(path.join(`./cache/${key}/`, file));
                 if (!stats.isDirectory()) {
                     fs.unlink(path.join(`./cache/${key}/`, file), err => {
                         if (err) console.log(`Cannot delete file: ./cache/${file}`);
                         resolve("");
-                        console.log(`Deleting file: ./cache/${file}`);
                     });
                 } else {
                     deleteFolderRecursive(path.join(`./cache/${key}/`, file));
-                    console.log(`Deleting folder: ./cache/${file}`);
                 }
 
             }
@@ -85,7 +80,6 @@ const cleanUp = (key, exec) => {
         // Kill the infinite loops that did not obey SIGTERM
         // TODO: improve timeout functions
         childProcess.exec(`pkill -9 ${exec}`, (err, out, stderr) => {
-            console.log(`Killed stay instance(s) not conforming to SIGTERM`)
         });
     });
 };
@@ -105,15 +99,15 @@ let deleteFolderRecursive = (path) => {
 };
 
 const removeTemp = (key) => {
-    console.log("Removing folder...");
     fs.rmdirSync("./cache/" + key);
 };
 
 const testFile = (exec, test, key) => {
     return new Promise(async (resolve) => {
+        let startTime = new Date().getMilliseconds();
         let arguments = `${test.arguments} `;
         childProcess.exec(`./${exec} ${arguments}< tests/${test.name}.in > results/${test.name}.myout 2> results/${test.name}.myerr`, {
-            timeout: 2000,
+            timeout: 2500,
             cwd: process.cwd() + `/cache/${key}/`
         }, (error, stdout, stderr) => {
             if (error) {
@@ -123,7 +117,8 @@ const testFile = (exec, test, key) => {
                     code: error.code,
                     stdout: readFile(test, ".myout", key),
                     stderr: readFile(test, ".myerr", key),
-                    signal: error.signal
+                    signal: error.signal,
+                    time: startTime-new Date().getMilliseconds()
                 });
             } else {
                 resolve({
@@ -132,7 +127,8 @@ const testFile = (exec, test, key) => {
                     code: 0,
                     stdout: readFile(test, ".myout", key),
                     stderr: readFile(test, ".myerr", key),
-                    signal: null
+                    signal: null,
+                    time: startTime-new Date().getMilliseconds()
                 });
             }
         });
