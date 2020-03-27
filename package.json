@@ -19,6 +19,7 @@
   "homepage": "https://github.com/bradenn/turnin-worker#readme",
   "dependencies": {
     "colors": "^1.4.0",
-    "diff": "^4.0.2"
+    "diff": "^4.0.2",
+    "express": "^4.17.1"
   }
 }

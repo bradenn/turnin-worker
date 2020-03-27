@@ -21,12 +21,12 @@ router.post('/test', (req, res, next) => {
     console.log(`Creating necessary files for tests`);
     tests.forEach((test) => {
         console.log(`Creating necessary files for test ${test._id}`);
-        getDiff.convertToFile(test.name + ".in", `./cache/${jobKey}/`, test.input);
+        getDiff.convertToFile(test.name + ".in", `./cache/${jobKey}/tests/`, test.input);
     });
 
-    getDiff.compileAndCheck(req.body.make, tests, jobKey, (testResponses, compileOutputs) => {
+    getDiff.compileAndCheck(req.body.make, tests, jobKey, (testResponses, compileOutputs, time) => {
         return res.status(200).json({
-            tests: testResponses, compile: compileOutputs,
+            tests: testResponses, compile: compileOutputs, time: time,
             debug: {server: config.server, node: config.node, instance: (process.env.NODE_ENV === "cluster")?(parseInt(process.env.INSTANCE_ID) + 1).toString():config.instance}
         });
     }).then(r => {

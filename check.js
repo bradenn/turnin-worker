@@ -7,6 +7,14 @@ let configDir = (key) => {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir);
     }
+    let testDir = `./cache/${key}/tests`;
+    if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir);
+    }
+    let resultDir = `./cache/${key}/results`;
+    if (!fs.existsSync(resultDir)) {
+        fs.mkdirSync(resultDir);
+    }
 };
 
 let convertToFile = (name, location, code) => {
@@ -23,7 +31,7 @@ let convertToFile = (name, location, code) => {
 };
 
 function readFile(test, ext, key) {
-    let inputFile = `./cache/${key}/${test.name}${ext}`;
+    let inputFile = `./cache/${key}/results/${test.name}${ext}`;
     let output = [];
     try {
         const input = fs.readFileSync(inputFile, 'UTF-8');
@@ -104,8 +112,7 @@ const removeTemp = (key) => {
 const testFile = (exec, test, key) => {
     return new Promise(async (resolve) => {
         let arguments = `${test.arguments} `;
-        console.log(`./${exec} ${arguments}< ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`);
-        childProcess.exec(`./${exec} ${arguments}< ${test.name}.in > ${test.name}.myout 2> ${test.name}.myerr`, {
+        childProcess.exec(`./${exec} ${arguments}< tests/${test.name}.in > results/${test.name}.myout 2> results/${test.name}.myerr`, {
             timeout: 2000,
             cwd: process.cwd() + `/cache/${key}/`
         }, (error, stdout, stderr) => {
@@ -151,6 +158,7 @@ const compileFile = (command, key) => {
 };
 
 const compileAndCheck = async (command, tests, key, cb) => {
+    let startTime = new Date().getMilliseconds();
     let preCompile = await getFilesPromise(key);
     const compileResults = await Promise.resolve(compileFile(command, key));
     let postCompile = await getFilesPromise(key);
@@ -158,7 +166,8 @@ const compileAndCheck = async (command, tests, key, cb) => {
     const testResults = await Promise.all(tests.map(test => testFile(exec, test, key)));
     await Promise.resolve(cleanUp(key, exec));
     deleteFolderRecursive(`./cache/${key}`);
-    cb(testResults, compileResults);
+    let endTime = new Date().getMilliseconds();
+    cb(testResults, compileResults, (startTime-endTime));
 };
 
 module.exports.compileAndCheck = compileAndCheck;
