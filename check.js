@@ -106,7 +106,10 @@ const testFile = (exec, test, key) => {
     return new Promise(async (resolve) => {
         let startTime = new Date().getMilliseconds();
         let arguments = `${test.arguments} `;
-        childProcess.exec(`./${exec} ${arguments}< tests/${test.name}.in > results/${test.name}.myout 2> results/${test.name}.myerr`, {
+        let stdoutMaxChars = test.max_stdout || 5000;
+        let stderrMaxChars = test.max_stderr || 5000;
+        let preparedArgument = `{ ./${exec} ${arguments}< tests/${test.name}.in 2>&3 | head -c ${stdoutMaxChars} > results/${test.name}.myout; } 3>&1 1>&2 | head -c ${stderrMaxChars} > results/${test.name}.myerr`;
+        childProcess.exec(preparedArgument, {
             timeout: 2500,
             cwd: process.cwd() + `/cache/${key}/`
         }, (error, stdout, stderr) => {
@@ -118,7 +121,7 @@ const testFile = (exec, test, key) => {
                     stdout: readFile(test, ".myout", key),
                     stderr: readFile(test, ".myerr", key),
                     signal: error.signal,
-                    time: startTime-new Date().getMilliseconds()
+                    time: 0
                 });
             } else {
                 resolve({
@@ -128,7 +131,7 @@ const testFile = (exec, test, key) => {
                     stdout: readFile(test, ".myout", key),
                     stderr: readFile(test, ".myerr", key),
                     signal: null,
-                    time: startTime-new Date().getMilliseconds()
+                    time: 0
                 });
             }
         });
@@ -154,7 +157,7 @@ const compileFile = (command, key) => {
 };
 
 const compileAndCheck = async (command, tests, key, cb) => {
-    let startTime = new Date().getMilliseconds();
+    const startTime = new Date().getMilliseconds();
     let preCompile = await getFilesPromise(key);
     const compileResults = await Promise.resolve(compileFile(command, key));
     let postCompile = await getFilesPromise(key);
@@ -162,8 +165,7 @@ const compileAndCheck = async (command, tests, key, cb) => {
     const testResults = await Promise.all(tests.map(test => testFile(exec, test, key)));
     await Promise.resolve(cleanUp(key, exec));
     deleteFolderRecursive(`./cache/${key}`);
-    let endTime = new Date().getMilliseconds();
-    cb(testResults, compileResults, (startTime-endTime));
+    cb(testResults, compileResults, (new Date().getMilliseconds() - startTime));
 };
 
 module.exports.compileAndCheck = compileAndCheck;

@@ -8,7 +8,7 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 // Include routes
-var routes = require('./routes/');
+let routes = require('./routes/');
 app.use('/api', routes);
 
 // Catch 404 and forward to error handler
