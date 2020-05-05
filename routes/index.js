@@ -1,31 +1,35 @@
 let express = require('express');
 let router = express.Router();
-let getDiff = require('../check.js');
-let config = require('../env/config.json');
+let compiler = require('../check.js');
+let env = require('../env/env.js');
+const version = require("../package.json").version;
+const hostname = require('os').hostname();
 
 let generateJobKey = () => {
     return Math.random().toString(36).slice(2)
 };
 
-router.post('/test', (req, res, next) => {
-    let jobKey = generateJobKey();
+router.post('/test', (req, res) => {
+    const jobKey = generateJobKey();
 
-    getDiff.configDir(jobKey);
+    compiler.configDir(jobKey);
 
     let files = req.body.files;
     files.forEach(file => {
-        getDiff.convertToFile(file.name, `./cache/${jobKey}/`, file.contents);
+        compiler.convertToFile(file.name, `./cache/${jobKey}/`, file.contents);
     });
 
     let tests = req.body.tests;
     tests.forEach((test) => {
-        getDiff.convertToFile(test.name + ".in", `./cache/${jobKey}/tests/`, test.input);
+        compiler.convertToFile(test.name + ".in", `./cache/${jobKey}/tests/`, test.input);
     });
 
-    getDiff.compileAndCheck(req.body.make, tests, jobKey, (testResponses, compileOutputs, time) => {
+    let compileTimeout = req.body.timeout || 5000;
+
+    compiler.compileAndCheck(req.body.make, tests, jobKey, compileTimeout, (testResponses, compileOutputs, time) => {
         return res.status(200).json({
             tests: testResponses, compile: compileOutputs, time: time,
-            debug: {server: config.server, node: config.node, instance: (process.env.NODE_ENV === "cluster")?(parseInt(process.env.INSTANCE_ID) + 1).toString():config.instance}
+            debug: {server: `${env.SERVER}:${hostname}`, version: version, node: env.NODE, instance: (process.env.NODE_ENV === "production")?(parseInt(process.env.INSTANCE_ID) + 1).toString():1}
         });
     }).then(r => {
     });

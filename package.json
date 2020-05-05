@@ -1,6 +1,6 @@
 {
   "name": "turnin-worker",
-  "version": "1.0.0",
+  "version": "2.1.8",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -18,8 +18,12 @@
   },
   "homepage": "https://github.com/bradenn/turnin-worker#readme",
   "dependencies": {
-    "colors": "^1.4.0",
+    "body-parser": "^1.19.0",
     "diff": "^4.0.2",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "performance-now": "^2.1.0"
+  },
+  "devDependencies": {
+    "pidusage": "^2.0.18"
   }
 }

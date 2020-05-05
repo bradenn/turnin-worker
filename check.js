@@ -1,6 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const now = require('performance-now');
 let childProcess = require('child_process');
+let os = require('os');
+let pidusage = require('pidusage');
 
 let configDir = (key) => {
     let dir = `./cache/${key}`;
@@ -29,20 +32,20 @@ let convertToFile = (name, location, code) => {
     });
 };
 
-function readFile(test, ext, key) {
-    let inputFile = `./cache/${key}/results/${test.name}${ext}`;
-    let output = [];
-    try {
-        const input = fs.readFileSync(inputFile, 'UTF-8');
-        let lines = input.split(/\r?\n/);
-        lines.forEach((ln) => {
-            output.push(ln);
-        });
-    } catch (err) {
-        console.error(err);
-    }
-    return output;
-}
+// function readFile(test, ext, key) {
+//     let inputFile = `./cache/${key}/results/${test.name}${ext}`;
+//     let output = [];
+//     try {
+//         const input = fs.readFileSync(inputFile, 'UTF-8');
+//         let lines = input.split(/\r?\n/);
+//         lines.forEach((ln) => {
+//             output.push(ln);
+//         });
+//     } catch (err) {
+//         console.error(err);
+//     }
+//     return output;
+// }
 
 const getFiles = (key, cb) => {
     fs.readdir(`./cache/${key}/`, (err, files) => {
@@ -77,7 +80,7 @@ const cleanUp = (key, exec) => {
 
         });
 
-        // Kill the infinite loops that did not obey SIGTERM
+        // Kill the infinite loops that did not obey SIGTERM (That's all of them btw)
         // TODO: improve timeout functions
         childProcess.exec(`pkill -9 ${exec}`, (err, out, stderr) => {
         });
@@ -98,50 +101,36 @@ let deleteFolderRecursive = (path) => {
     }
 };
 
-const removeTemp = (key) => {
-    fs.rmdirSync("./cache/" + key);
-};
 
-const testFile = (exec, test, key) => {
-    return new Promise(async (resolve) => {
-        let startTime = new Date().getMilliseconds();
-        let arguments = `${test.arguments} `;
-        let stdoutMaxChars = test.max_stdout || 5000;
-        let stderrMaxChars = test.max_stderr || 5000;
-        let preparedArgument = `{ ./${exec} ${arguments}< tests/${test.name}.in 2>&3 | head -c ${stdoutMaxChars} > results/${test.name}.myout; } 3>&1 1>&2 | head -c ${stderrMaxChars} > results/${test.name}.myerr`;
-        childProcess.exec(preparedArgument, {
-            timeout: 2500,
-            cwd: process.cwd() + `/cache/${key}/`
-        }, (error, stdout, stderr) => {
-            if (error) {
-                resolve({
-                    _id: test._id,
-                    name: test.name,
-                    code: error.code,
-                    stdout: readFile(test, ".myout", key),
-                    stderr: readFile(test, ".myerr", key),
-                    signal: error.signal,
-                    time: 0
-                });
-            } else {
-                resolve({
-                    _id: test._id,
-                    name: test.name,
-                    code: 0,
-                    stdout: readFile(test, ".myout", key),
-                    stderr: readFile(test, ".myerr", key),
-                    signal: null,
-                    time: 0
-                });
-            }
+const testFile = (exec, test, key) => new Promise(async (resolve) => {
+    let arguments = test.arguments || "";
+    let stdoutMaxChars = test.max_stdout || 1000;
+    let stderrMaxChars = test.max_stderr || 1000;
+    let preparedArgument = `./${exec} ${arguments}< tests/${test.name}.in`;
+    let startTime = now();
+    childProcess.exec(preparedArgument, {
+        killSignal: "SIGTERM",
+        timeout: test.timeout || 2500,
+        cwd: process.cwd() + `/cache/${key}/`,
+        maxBuffer: (stdoutMaxChars + stderrMaxChars) * 2
+    }, (error, stdout, stderr) => {
+        resolve({
+            _id: test._id,
+            name: test.name,
+            exit: (error) ? (error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") ? 127 : error.code : 0,
+            stdout: stdout.substr(0, stdoutMaxChars).split('\n'),
+            stderr: stderr.substr(0, stderrMaxChars).split('\n'),
+            signal: (error) ? (error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") ? "SIGTERM" : error.signal : null,
+            time: (now() - startTime).toFixed(2)
         });
     });
-};
+});
 
-const compileFile = (command, key) => {
-    return new Promise(async (resolve, reject) => {
+const compileFile = (command, key, timeout) => {
+    return new Promise(async (resolve) => {
+        const startTime = now();
         childProcess.exec(command, {
-            timeout: 5000,
+            timeout: timeout,
             killSignal: "SIGTERM",
             cwd: process.cwd() + `/cache/${key}/`
         }, (err, stdout, stderr) => {
@@ -150,22 +139,23 @@ const compileFile = (command, key) => {
                 stdout: (stdout.length >= 1) ? stdout.split("\n") : "",
                 stderr: (stderr.length >= 1) ? stderr.split("\n") : "",
                 code: (err) ? err.code : 0,
+                time: (now() - startTime).toFixed(2),
                 exec: ""
             });
         });
     });
 };
 
-const compileAndCheck = async (command, tests, key, cb) => {
-    const startTime = new Date().getMilliseconds();
+const compileAndCheck = async (command, tests, key, timeout, cb) => {
+    const startTime = now();
     let preCompile = await getFilesPromise(key);
-    const compileResults = await Promise.resolve(compileFile(command, key));
+    const compileResults = await Promise.resolve(compileFile(command, key, timeout));
     let postCompile = await getFilesPromise(key);
     let exec = postCompile.filter(f => !preCompile.includes(f)).filter(f => (!f.includes(".o") || f.includes(".out")))[0];
-    const testResults = await Promise.all(tests.map(test => testFile(exec, test, key)));
+    let testResults = await Promise.all(tests.map(test => testFile(exec, test, key)));
     await Promise.resolve(cleanUp(key, exec));
     deleteFolderRecursive(`./cache/${key}`);
-    cb(testResults, compileResults, (new Date().getMilliseconds() - startTime));
+    cb(testResults, compileResults, (now() - startTime).toFixed(2));
 };
 
 module.exports.compileAndCheck = compileAndCheck;

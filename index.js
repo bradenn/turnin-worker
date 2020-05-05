@@ -1,6 +1,8 @@
-const config = require("./env/config.json");
 let express = require('express');
 let app = express();
+const version = require("./package.json").version;
+const hostname = require('os').hostname();
+let env = require('./env/env.js');
 let bodyParser = require('body-parser');
 
 // Parse incoming requests
@@ -13,12 +15,10 @@ app.use('/api', routes);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
-    var err = new Error('File Not Found');
+    let err = new Error('Unknown Request');
     err.status = 404;
     next(err);
 });
-
-
 
 app.use(function (err, req, res, next) {
     res.status(err.status || 500);
@@ -26,11 +26,6 @@ app.use(function (err, req, res, next) {
 });
 
 // Listen on port {port} <- config
-app.listen(config.port, function () {
-    let port = config.port;
-    if(process.env.NODE_ENV === "cluster"){
-        port = process.env.PORT;
-        console.log(`Launching in cluster mode.`)
-    }
-    console.log('Express server started. Listing on port ' + port + '.');
+app.listen(env.PORT, function () {
+    console.log(`Turnin-worker v${version} started. Listing on port ${env.PORT} at ${hostname}@${env.SERVER}:${env.NODE}.`);
 });
