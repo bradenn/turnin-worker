@@ -20,7 +20,7 @@
   "dependencies": {
     "body-parser": "^1.19.0",
     "diff": "^4.0.2",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "performance-now": "^2.1.0"
   },
   "devDependencies": {
